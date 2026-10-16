@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Studio Editor</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #101116;
+  color: #f5f5f7;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  padding: 20px;
+  text-align: center;
+  background: #191a22;
+  border-bottom: 1px solid #343541;
+}
+
+header h1 {
+  margin: 0;
+  color: #a78bfa;
+}
+
+header p {
+  color: #aaa;
+  font-size: 14px;
+}
+
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 16px;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px;
+  background: #7c3aed;
+  color: white;
+  cursor: pointer;
+}
+
+button:active {
+  opacity: .8;
+}
+
+.upload {
+  display: block;
+  text-align: center;
+  padding: 15px;
+  background: #272832;
+  border: 1px dashed #a78bfa;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+#photo {
+  display: none;
+}
+
+.preview {
+  margin: 16px 0;
+  min-height: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: #202127;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  height: auto;
+  object-fit: contain;
+}
+
+#empty {
+  color: #aaa;
+  text-align: center;
+}
+
+.panel {
+  background: #1c1d25;
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+}
+
+h2 {
+  font-size: 17px;
+  margin-top: 0;
+  color: #c4b5fd;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.filters button {
+  background: #30313c;
+  padding: 11px 4px;
+  font-size: 13px;
+}
+
+.filters button.active {
+  background: #7c3aed;
+}
+
+.control {
+  margin: 16px 0;
+}
+
+.control label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 9px;
+  font-size: 14px;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #a78bfa;
+}
+
+input[type="color"] {
+  width: 48px;
+  height: 38px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+input[type="text"], select {
+  width: 100%;
+  padding: 12px;
+  background: #292a34;
+  color: white;
+  border: 1px solid #444552;
+  border-radius: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.secondary {
+  background: #343541;
+}
+
+.note {
+  color: #aaa;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (min-width: 750px) {
+  .editor {
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .preview {
+    min-height: 420px;
+  }
+
+  .filters {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>PIXEL STUDIO</h1>
+  <p>Edit your photos. Create your style.</p>
+</header>
+
+<main>
+
+<label class="upload" for="photo">
+  + Choose Photo
+</label>
+<input id="photo" type="file" accept="image/*">
+
+<div class="editor">
+  <section>
+    <div class="preview" id="preview">
+      <p id="empty">Your photo will appear here</p>
+      <canvas id="canvas" hidden></canvas>
+    </div>
+
+    <div class="panel">
+      <h2>Filters</h2>
+      <div class="filters">
+        <button class="active" data-filter="normal">Normal</button>
+        <button data-filter="vintage">Vintage</button>
+        <button data-filter="bw">B&W</button>
+        <button data-filter="warm">Warm</button>
+        <button data-filter="cinema">Cinema</button>
+        <button data-filter="cool">Cool</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Photo adjustments</h2>
+
+      <div class="control">
+        <label>Brightness <span id="brightnessValue">100%</span></label>
+        <input id="brightness" type="range"
+          min="20" max="200" value="100">
+      </div>
+
+      <div class="control">
+        <label>Contrast <span id="contrastValue">100%</span></label>
+        <input id="contrast" type="range"
+          min="20" max="200" value="100">
+      </div>
+
+      <div class="control">
+        <label>Saturation <span id="saturationValue">100%</span></label>
+        <input id="saturation" type="range"
+          min="0" max="200" value="100">
+      </div>
+
+      <div class="control">
+        <label>Beauty softness <span id="beautyValue">0</span></label>
+        <input id="beauty" type="range"
+          min="0" max="3" step="0.5" value="0">
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <h2>Background</h2>
+      <div class="row">
+        <label for="bgColor">Background color</label>
+        <input id="bgColor" type="color" value="#202127">
+      </div>
+      <p class="note">
+        This color fills transparent areas in PNG images.
+        It does not automatically remove the background
+        of an ordinary photo.
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>Add text</h2>
+
+      <div class="control">
+        <label for="caption">Your text</label>
+        <input id="caption" type="text"
+          placeholder="Write something...">
+      </div>
+
+      <div class="control">
+        <label for="textColor">Text color</label>
+        <input id="textColor" type="color" value="#ffffff">
+      </div>
+
+      <div class="control">
+        <label>Text size <span id="textSizeValue">36</span></label>
+        <input id="textSize" type="range"
+          min="12" max="100" value="36">
+      </div>
+
+      <div class="control">
+        <label for="textPosition">Text position</label>
+        <select id="textPosition">
+          <option value="bottom">Bottom</option>
+          <option value="center">Center</option>
+          <option value="top">Top</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Save your photo</h2>
+      <div class="actions">
+        <button class="secondary" id="rotate">Rotate</button>
+        <button class="secondary" id="reset">Reset</button>
+        <button id="download" style="grid-column:1/-1">
+          Download edited photo
+        </button>
+      </div>
+      <p class="note">
+        Your edits are rendered in the browser.
+        Your selected photo is not uploaded to a server.
+      </p>
+    </div>
+  </section>
+</div>
+
+</main>
+
+<script>
+const photo = document.getElementById("photo");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const empty = document.getElementById("empty");
+
+let img = new Image();
+let loaded = false;
+let rotation = 0;
+let currentFilter = "normal";
+let imageURL = null;
+
+const defaults = {
+  brightness: 100,
+  contrast: 100,
+  saturation: 100,
+  beauty: 0,
+  caption: "",
+  textColor: "#ffffff",
+  textSize: 36,
+  textPosition: "bottom",
+  bgColor: "#202127"
+};
+
+const settings = {...defaults};
+
+const presets = {
+  normal: {brightness:1, contrast:1, saturation:1,
+           sepia:0, grayscale:0, hue:0},
+  vintage: {brightness:1.05, contrast:0.92, saturation:0.75,
+            sepia:0.45, grayscale:0, hue:0},
+  bw: {brightness:1, contrast:1.15, saturation:0,
+       sepia:0, grayscale:1, hue:0},
+  warm: {brightness:1.05, contrast:1.03, saturation:1.2,
+         sepia:0.18, grayscale:0, hue:0},
+  cinema: {brightness:0.95, contrast:1.2, saturation:1.15,
+           sepia:0.08, grayscale:0, hue:0},
+  cool: {brightness:1.02, contrast:1.05, saturation:0.9,
+         sepia:0, grayscale:0, hue:190}
+};
+
+photo.addEventListener("change", () => {
+  const file = photo.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    alert("Please select an image");
+    return;
+  }
+
+  if (imageURL) URL.revokeObjectURL(imageURL);
+
+  imageURL = URL.createObjectURL(file);
+  img = new Image();
+
+  img.onload = () => {
+    loaded = true;
+    rotation = 0;
+    currentFilter = "normal";
+
+    Object.assign(settings, defaults);
+    updateControls();
+
+    empty.hidden = true;
+    canvas.hidden = false;
+
+    render();
+    URL.revokeObjectURL(imageURL);
+    imageURL = null;
+  };
+
+  img.onerror = () => {
+    alert("Could not open this image");
+  };
+
+  img.src = imageURL;
+});
+
+function updateControls() {
+  ["brightness", "contrast", "saturation", "beauty",
+   "caption", "textColor", "textSize", "textPosition",
+   "bgColor"].forEach(id => {
+    document.getElementById(id).value = settings[id];
+  });
+
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.filter === currentFilter
+    );
+  });
+
+  updateLabels();
+}
+
+function updateLabels() {
+  ["brightness", "contrast", "saturation"].forEach(id => {
+    document.getElementById(id + "Value").textContent =
+      settings[id] + "%";
+  });
+
+  document.getElementById("beautyValue").textContent =
+    settings.beauty;
+
+  document.getElementById("textSizeValue").textContent =
+    settings.textSize;
+}
+
+function render() {
+  if (!loaded) return;
+
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+
+  const sideways = Math.abs(rotation % 180) === 90;
+
+  canvas.width = sideways ? h : w;
+  canvas.height = sideways ? w : h;
+
+  // Fill the background, including transparent PNG areas
+  ctx.fillStyle = settings.bgColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const p = presets[currentFilter];
+
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(rotation * Math.PI / 180);
+
+  ctx.filter =
+    `brightness(${settings.brightness * p.brightness}%) ` +
+    `contrast(${settings.contrast * p.contrast}%) ` +
+    `saturate(${settings.saturation * p.saturation}%) ` +
+    `sepia(${p.sepia * 100}%) ` +
+    `grayscale(${p.grayscale * 100}%) ` +
+    `hue-rotate(${p.hue}deg) ` +
+    `blur(${settings.beauty}px)`;
+
+  ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  ctx.restore();
+  ctx.filter = "none";
+
+  drawText();
+}
+
+function drawText() {
+  const text = settings.caption.trim();
+  if (!text) return;
+
+  const size = Number(settings.textSize);
+
+  ctx.save();
+  ctx.fillStyle = settings.textColor;
+  ctx.font = `bold ${size}px Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  let y = canvas.height / 2;
+
+  if (settings.textPosition === "top") {
+    y = size + 20;
+  } else if (settings.textPosition === "bottom") {
+    y = canvas.height - size - 20;
+  }
+
+  // Keep long text inside the image width
+  const maxWidth = canvas.width * 0.9;
+  const lines = wrapText(text, maxWidth, size);
+
+  const lineHeight = size * 1.2;
+  const startY = y - ((lines.length - 1) * lineHeight) / 2;
+
+  lines.forEach((line, i) => {
+    ctx.lineWidth = Math.max(2, size / 10);
+    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.strokeText(line, canvas.width / 2,
+      startY + i * lineHeight, maxWidth);
+
+    ctx.fillText(line, canvas.width / 2,
+      startY + i * lineHeight, maxWidth);
+  });
+
+  ctx.restore();
+}
+
+function wrapText(text, maxWidth, size) {
+  ctx.save();
+  ctx.font = `bold ${size}px Arial, sans-serif`;
+
+  const words = text.split(/\s+/);
+  const lines = [];
+  let line = "";
+
+  words.forEach(word => {
+    const test = line ? line + " " + word : word;
+
+    if (line && ctx.measureText(test).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  });
+
+  if (line) lines.push(line);
+  ctx.restore();
+
+  return lines;
+}
+
+document.querySelectorAll("[data-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentFilter = btn.dataset.filter;
+    updateControls();
+    render();
+  });
+});
+
+[
+  "brightness", "contrast", "saturation", "beauty",
+  "caption", "textColor", "textSize", "textPosition",
+  "bgColor"
+].forEach(id => {
+  document.getElementById(id).addEventListener("input", e => {
+    const el = e.target;
+
+    settings[id] = el.type === "range"
+      ? Number(el.value)
+      : el.value;
+
+    updateLabels();
+    render();
+  });
+});
+
+document.getElementById("rotate").addEventListener("click", () => {
+  if (!loaded) return;
+  rotation = (rotation + 90) % 360;
+  render();
+});
+
+document.getElementById("reset").addEventListener("click", () => {
+  if (!loaded) return;
+
+  Object.assign(settings, defaults);
+  rotation = 0;
+  currentFilter = "normal";
+
+  updateControls();
+  render();
+});
+
+document.getElementById("download").addEventListener("click", () => {
+  if (!loaded) {
+    alert("Please choose a photo first");
+    return;
+  }
+
+  canvas.toBlob(blob => {
+    if (!blob) {
+      alert("Could not export the photo");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "pixel-studio-edited.png";
+    link.click();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }, "image/png");
+});
+</script>
+
+</body>
+</html>
